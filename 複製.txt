@@ -1,0 +1,170 @@
+You will run some component code (client.c, test.c, e2manager.py, mredis.py, submgr.py, routmgr.py, routeredis.py)
+
+Step 1. Run E2T.c (E2 Termination)
+	cd /home/user/20211120/E2o
+	export RMR_SEED_RT=routing_table_xapp.rt RMR_LOG_VLEVEL=0
+	gcc E2_Termination_TLV.c -g -o test -L. -lasncodec -lsctp -lrmr_si -lpthread cJSON.c -lm
+	./test
+
+Step 2. Run oamutl_agent0923 (E2 Agent)
+	cd /home/user/20211120/e2test_1129
+	* 以下兩個要分兩個 Terminal 執行
+	./oamutl_agent0923
+	./oamutl_agent_100ms
+	./e2_agent -ice iii_oamutl_e2node.json
+	
+Step 3. Docker build
+	cd /home/user/20211120/examples
+	bash yaml2.sh
+	kubectl apply -f ./cluster	
+
+Step 4. Run e2manager.py (E2 Manager)
+	export RMR_SEED_RT=檔案的路徑/routing_table.rt
+	docker build -t e2mgryaml6:release -f  Dockerfile-e2mgryaml6 .
+	sudo docker run --name e2mgr -i --net=host e2mgryaml6:release
+
+Step 5. Run mredis.py (Redis Manager)
+	export RMR_SEED_RT=檔案的路徑/routing_table.rt
+	docker build -t mredisyaml2:release -f  Dockerfile-mredisyaml2 .
+	sudo docker run --name mredis -i --net=host mredisyaml2:release
+
+Step 6. Run routmgr.py (Routing Manager)
+	export RMR_SEED_RT=檔案的路徑/routing_table.rt
+	docker build -t routmgryaml3:release -f  Dockerfile-routmgryaml3 .
+	sudo docker run --name routmgr -i --net=host routmgryaml3:release
+
+
+Step 7. Run submgr.py (Subscription Manager)
+	export RMR_SEED_RT=檔案的路徑/routing_table.rt
+	docker build -t submgryaml2:release -f  Dockerfile-submgryaml2 .
+	sudo docker run --name submgr -i --net=host submgryaml2:release
+
+Step 8. Run routeredis.py (Routing Redis Manager)
+	export RMR_SEED_RT=檔案的路徑/routing_table.rt
+	docker build -t mroutingyaml2:release -f Dockerfile-routeredisyaml2 .
+	sudo docker run --name routeredis -i --net=host mroutingyaml2:release
+
+Step 9. Run xapp_tlv.py (xApp)
+        (原先預設containerIP:140.123.102.113/我自己虛擬機為10.0.2.15)
+	docker build --build-arg containerIP=127.0.0.1 -t xapp_tlv:release -f  Dockerfile-xapp_tlv  .
+	sudo docker run --name xapp_tlv -i --net=host xapp_tlv:release
+	
+	docker run -v /home/user/20211120/examples/xApp\ Design/record_data:/record_data -i --net=host xapp_tlv:release
+	docker run -v /home/user/RIC\ component/xapp_20220105/record_data:/record_data -i --net=host xapp_tlv:release
+
+9. 在 Redis 上的操作
+	show 出所有的 key	
+	範例：10.244.0.14:6379> keys *
+	結果：
+	1) "{E2setup_group},E2 Node ID"
+	2) "{appmgr},1m8bqXoWRbMDHmi14mBJjTFJTSl"
+	3) "{E2setup},181"
+	4) "{e2Manager},E2TAddresses"
+	5) "{appmgr},1m8bqWgFNU65lJ6vasknSOn2Iw3"
+	6) "{subscription_group},RIC Requestor ID"
+	7) "{report_group},RIC Requestor ID"
+	8) "{report},22"
+	9) "{subscription},20"
+
+	get key
+	範例：10.244.0.14:6379> get {E2setup},181
+	結果：
+	"{'whatmessage': 1, 'E2 Node ID': 181, 'RAN Func Def': 0, 'RAN Func ID ': 1}"
+
+	
+	get member
+	範例：10.244.0.14:6379> smembers "{report_group},RIC Requestor ID"
+	結果：
+	1) "22"
+
+	刪除 key
+	範例：10.244.0.14:6379> del "{E2setup},181"
+	結果：
+	(integer) 1	
+
+redis 中清除數據指令 flushall
+
+
+cd /media/sf_share/xApp/xapp_example/examples
+docker build -t pong:latest -f  Dockerfile-Pong .
+docker run -i --net=host pong:latest
+
+E2_agent執行指令 
+./e2_agent0718 -ice iiic_e2node10.json
+
+我的檔案路徑
+cd /home/lienlab305/work/III/Near-RT\ RIC\ and\ WBT/RIC\ component/
+
+常用指令
+kubectl get pods -o wide -A
+export RMR_SEED_RT=/home/lienlab305/work/III/Near-RT\ RIC\ and\ WBT/RIC\ component/routing_table.rt  #RMR_LOG_VLEVEL=0
+env | grep RMR
+docker rm -f $(docker ps -aq) 刪除所有docker(去掉-f是刪除已停止的)
+docker rm e2mgr mredis routmgr submgr routeredis xapp_wbt
+ps -aux | grep python //查top memory
+
+IP被refuse時
+sudo -i
+swapoff -a
+exit
+strace -eopenat kubectl version
+
+測試pingpong
+docker build -t ping:latest -f  Dockerfile-Ping .
+docker build -t pong:latest -f  Dockerfile-Pong .
+docker run --name ping -i --net=host ping:latest
+docker run --name pong -i --net=host pong:latest
+
+cmake .. -DBUILD_DOC=1 -DDEV_PKG=1 -DSKIP_EXTERNALS=1
+$cmake .. -DBUILD_DOC=1 -DDEV_PKG=1 -DBUILD_NNG=1
+$make package install 
+
+ls | grep .deb (其結果如圖 1-24所示)
+$sudo dpkg -i rmr-dev-rotten_4.8.1_amd64.deb
+$ls /usr/local/lib/
+
+
+sudo apt-get install -y ninja-build
+$sudo apt-get install python-pip
+sudo cmake -G Ninja ..
+sudo apt install ninja-build
+sudo ninja (執行ninja其結果如圖 1-15所示)
+$sudo ninja test
+sudo ninja install
+
+
+cmake ..
+cmake --build .
+ctest .
+sudo cmake --build . --target install
+
+pip install --user -e .
+cd examples
+set -x LD_LIBRARY_PATH /usr/local/lib/:/usr/local/lib64; set -x  RMR_SEED_RT test_route.rt; python pong_xapp.py
+(diff tmux window)
+set -x LD_LIBRARY_PATH /usr/local/lib/:/usr/local/lib64; set -x  RMR_SEED_RT test_route.rt; python ping_xapp.py
+
+wget -nv --content-disposition https://packagecloud.io/o-ran-sc/master/packages/debian/stretch/rmr_${RMR_VER}_amd64.deb/download.deb
+RUN wget -nv --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_${RMR_VER}_amd64.deb/download.deb
+
+
+sudo apt-get install valgrind
+valgrind --leak-check=full --suppressions=valgrind-python.supp /tmp/python_dbg/bin/python test.py
+valgrind --leak-check=full --show-leak-kinds=all --verbose 執行檔
+valgrind --tool=massif python my_script.py
+valgrind --tool=memcheck --leak-check=full python3.8 .py檔
+
+python3.8 /usr/local/lib/python3.8/dist-packages/mprof.py run <executable>
+python -m memory_profiler py檔
+mprof run memory_profiler_test.py
+
+
+git https://github.com/nanomsg/nng.git
+git clone https://github.com/nanomsg/nanomsg.git
+
+top -b -n 1 -d 3 >>file.txt
+
+解析：
+-b ：batch模式，可以重定向到文件中
+-n 1：一共取1次top数据。后边加数字，表示次数
+-d 3：每次top时间间隔是3秒钟
