@@ -1,0 +1,29 @@
+{
+    "Network": {
+        "LocalAddress": "10.0.2.15",
+        "LocalPort": 4327,
+        "RicAddress": "10.0.2.15",
+        "RicPort": 30860,
+        "PPID": 0
+    },
+    "Identity": {
+        "PLMN": {
+            "MCC": 466,
+            "MNC": 10
+        },
+        "E2NodeType":"gNB",
+        "E2NodeID": {"Hex":"cf680a6", "BitLen": 28}
+    },
+    "RANFunctions": [
+        {
+            "ID": 1,
+            "Revision": 1,
+            "ShortName": "WBTv1",
+            "SMOID": "10.123.777.300",
+            "Description": "Connect to white box test server.",
+            "InterfaceType":"tcp",
+            "IntfParamA": "10.0.2.15:3900",
+            "IntfParamB": ""
+        }
+    ] 
+}
