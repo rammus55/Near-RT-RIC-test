@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: submgr-pod
+  labels:
+    app: submgr-webserver
+spec:
+  hostNetwork: true
+  nodeName: lienlab305-virtualbox # schedule pod to specific node
+  containers:
+  - name: submgr
+    image: submgryaml2:release
+    
+    #command: ["./test616"]
+    env:
+     - name: RMR_SEED_RT
+       value: test_route_thrd.rt
+     - name: DEMO
+       value: "123"
+       #command: ["./test616"]
+    #ports:
+    #- containerPort: 4563
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: submgr-service
+spec:
+  type: NodePort
+  ports:
+    - port: 4400
+      #targetPort: 4563
+      #nodePort: 30440
+      #30400
+  selector:
+    app: submgr-webserver  

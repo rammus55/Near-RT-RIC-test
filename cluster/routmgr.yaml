@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: routmgr-pod
+  labels:
+    app: routmgr-webserver
+spec:
+  hostNetwork: true
+  nodeName: lienlab305-virtualbox # schedule pod to specific node
+  containers:
+  - name: routmgr
+    image: routmgryaml3:release
+    
+    #command: ["./test616"]
+    env:
+     - name: RMR_SEED_RT
+       value: test_route_thrd.rt
+     - name: DEMO
+       value: "123"
+       #command: ["./test616"]
+    #ports:
+    #- containerPort: 4563
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: routmgr-service
+spec:
+  type: NodePort
+  ports:
+    - port: 4600
+      #targetPort: 4563
+      #nodePort: 30460
+      #30400
+  selector:
+    app: routmgr-webserver  

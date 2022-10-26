@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mredis-pod
+  labels:
+    app: mredis-webserver
+spec:
+  hostNetwork: true
+  nodeName: lienlab305-virtualbox # schedule pod to specific node
+  containers:
+  - name: mredis
+    image: mredisyaml2:release
+#command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]  # error for back-off restarting failed container kubernetes
+    env:
+    - name: RMR_SEED_RT
+      value: test_route_thrd.rt
+    ports:
+    - containerPort: 6000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mredis-service
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    #name: mredisdns
+    port: 6000
+    targetPort: 6000
+  selector:
+    app: mredis-webserver  

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mrouting-pod
+  labels:
+    app: mrouting-webserver
+spec:
+  hostNetwork: true
+  nodeName: lienlab305-virtualbox # schedule pod to specific node
+  containers:
+  - name: mrouting
+    image: mroutingyaml2:release
+#command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]  # error for back-off restarting failed container kubernetes
+    env:
+    - name: RMR_SEED_RT
+      value: test_route_thrd.rt
+    ports:
+    - containerPort: 6600
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: routeredis-service
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    #name: mroutingdns
+    port: 6600
+    targetPort: 6600
+  selector:
+    app: mrouting-webserver  
